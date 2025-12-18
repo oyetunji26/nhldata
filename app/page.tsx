@@ -1,65 +1,157 @@
+"use client"
 import Image from "next/image";
+import { useEffect, useState } from "react";
+
 
 export default function Home() {
+  const [duration, setDuration] = useState<number>(7);
+  const [allTime, setAllTime] = useState<boolean>(false);
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
+
+
+
+  const currentYear = new Date()?.getFullYear()
+
+  console.log(currentYear - 1917)
+
+
+
+  useEffect(() => {
+    if (allTime) {
+      const durationSince1917 = currentYear - 1916;
+      setDuration(durationSince1917);
+    } else {
+      setDuration(7)
+    }
+  }, [allTime, currentYear]);
+
+
+  const handleClick = async () => {
+    try {
+      setIsDownloading(true);
+
+      // 1. Fetch the data
+      const response = await fetch(`/api/export?duration=${duration}`);
+
+      if (!response.ok) throw new Error('Download failed');
+
+      // 2. Convert response to a Blob (binary data)
+      const blob = await response.blob();
+
+      // 3. Create a temporary local URL for that blob
+      const url = window.URL.createObjectURL(blob);
+
+      // 4. Create a hidden <a> tag to trigger the download
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Set the filename (this should match your server-side header)
+      link.download = `nhl-stats-${duration}-seasons.xlsx`;
+
+      // 5. Append, click, and cleanup
+      document.body.appendChild(link);
+      link.click();
+
+      // Remove the link and revoke the URL to save memory
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error("Export Error:", error);
+      alert("There was an error generating your file.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+    <div className="flex flex-col min-h-screen items-center justify-center bg-[#131314] font-sans ">
+      <main className="flex flex-col items-center justify-between py-32 px-10  sm:items-start">
         <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
+          className="mx-auto"
+          src="/nhl_logo.svg"
+          alt="NHL logo"
+          width={130}
           height={20}
+
           priority
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+
+        <>
+          <div className="mt-10 p-8  text-center">
+            <h1 className="text-2xl font-bold mb-4 text-gray-100">Excel Data Exporter</h1>
+
+            <div className="mb-6 flex flex-col gap-7">
+              <div>
+                <label className="block text-sm font-medium text-gray-200 mb-2">
+                  Number of Seasons to Fetch:
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max={currentYear - 1917}
+                  value={duration}
+                  onChange={(e) => setDuration(parseInt(e.target.value) || 1)}
+                  className="min-w-40 p-2 border text-white text-xl border-gray-600 bg-[#1E1F20] rounded-xl text-center focus:ring-2 focus:ring-blue-500 outline-none overflow-hidden"
+                />
+              </div>
+              <div className="mt-2">
+                <input type="checkbox" name="" id="" checked={allTime} onChange={(e) => setAllTime(!allTime)} /> &nbsp; <span>All seasons</span>
+              </div>
+            </div>
+
+
+            <button
+              onClick={handleClick}
+              disabled={isDownloading}
+              className="px-4 py-2 bg-lime-700 text-white rounded hover:bg-lime-950 disabled:bg-lime-950 flex items-center gap-3 mx-auto cursor-pointer"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+
+              {
+                isDownloading ? <span className="loader" /> : (
+                  <Image
+                    className="mx-auto"
+                    src="/downloadIcon.svg"
+                    alt="NHL logo"
+                    width={20}
+                    height={20}
+
+                    priority
+                  />
+                )
+              }
+              <span>{isDownloading ? 'Generating File...' : 'Download Stats'}</span>
+            </button>
+
+            <p className="mt-4 text-xs text-gray-500">
+              *fetching data from 2025 back to {2025 - duration + 1}
+            </p>
+          </div>
+        </>
+
       </main>
+
+      <footer className="w-full pb-2">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
+
+            <p>© {currentYear} NHL Data Center. All rights reserved.</p>
+
+            <div className="flex items-center space-x-2 group">
+              <span className="text-gray-400">Developed with</span>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-500 fill-current animate-pulse" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+              </svg>
+              <span>by</span>
+              <a href="https://yourportfolio.com"
+                className="font-semibold text-gray-700 hover:text-blue-600 transition-colors duration-200 border-b border-transparent hover:border-blue-600">
+                Oyetunji Olagoke
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
