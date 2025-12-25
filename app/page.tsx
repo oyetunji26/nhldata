@@ -68,7 +68,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen items-center justify-center bg-[#131314] font-sans ">
       <main className="flex flex-col items-center justify-between py-32 px-10  sm:items-start">
         <Image
-          className="mx-auto"
+          className="mx-auto h-auto"
           src="/nhl_logo.svg"
           alt="NHL logo"
           width={130}
